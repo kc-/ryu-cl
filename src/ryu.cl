@@ -1,0 +1,57 @@
+(defpackage :ryu-cl (:use :common-lisp)
+            (:export #:float-to-string))
+
+(in-package :ryu-cl)
+
+(defmethod float-to-string (float-number)
+  (multiple-value-bind (significand exponent sign)
+      (integer-decode-float float-number)
+    (cond
+      ((= 0 float-number)
+       (return-from float-to-string "0.0"))
+      ((or (and (typep float-number 'single-float)
+                (= exponent #xFF))
+           (= exponent #b11111111111))
+       (return-from float-to-string (if (zerop significand)
+                                        "Infinity"
+                                        "NaN"))))
+    (let* ((e2 (- exponent 2))
+           (u (* (- (* 4 significand) 2)))
+           (w (* (+ (* 4 significand) 2)))
+           (e10 (if (minusp e2) e2 0))
+           (decimal-factor (if (minusp e2) (expt 5 (- e2)) (expt 2 e2))))
+      (multiple-value-bind (dec-coeff dec-exponent)
+          (compute-shortest (* decimal-factor u) (* decimal-factor w))
+        (let ((digits (princ-to-string dec-coeff)))
+          (with-output-to-string (s)
+            (when (minusp sign) (princ #\- s))
+            (princ (elt digits 0) s)
+            (princ #\. s)
+            (princ (subseq digits 1) s)
+            (princ (if (typep float-number 'single-float) #\e #\d) s)
+            (princ (1- (+ dec-exponent e10 (length digits))) s)
+            s))))))
+
+(defun compute-shortest (a c &optional (accept-smaller T) (accept-larger T))
+  "For a float value in the interval [A,C], compute the shortest decimal representation."
+  (let ((ai (list a))
+        (ci (list (if accept-larger c (1- c))))
+        (i 0)
+        (all-a-zero T))
+    (loop
+       for a-floor = (floor (car ai) 10)
+       for c-floor = (floor (car ci) 10)
+       while (< a-floor c-floor)
+       do
+         (setf all-a-zero (and all-a-zero (zerop (mod (car ai) 10))))
+         (push a-floor ai)
+         (push c-floor ci)
+         (incf i))
+    (when (and accept-smaller all-a-zero)
+      (loop
+         while (zerop (mod (car ai) 10))
+         do
+           (push (/ (car ai) 10) ai)
+           (push (truncate (car ci) 10) ci)
+           (incf i)))
+    (values (car ci) i)))
