@@ -11,7 +11,7 @@
        (return-from float-to-string "0.0"))
       ((or (and (typep float-number 'single-float)
                 (= exponent #xFF))
-           (= exponent #b11111111111))
+           (= exponent #x7FF))
        (return-from float-to-string (if (zerop significand)
                                         "Infinity"
                                         "NaN"))))
