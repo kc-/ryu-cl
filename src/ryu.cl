@@ -46,7 +46,7 @@
                (when (minusp sign) (princ #\- s))
                (princ (elt digits 0) s)
                (princ #\. s)
-               (princ (subseq digits 1) s)
+               (princ (if (> (length digits) 1) (subseq digits 1) "0") s)
                (princ (if (typep float-number 'single-float) #\e #\d) s)
                (princ (1- (+ dec-exponent e10 (length digits))) s)))
             s))))))
