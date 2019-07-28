@@ -32,10 +32,13 @@
             (princ (1- (+ dec-exponent e10 (length digits))) s)
             s))))))
 
-(defun compute-shortest (a c &optional (accept-smaller T) (accept-larger T))
+(defun compute-shortest (a b c &optional (accept-smaller T) (accept-larger T) (break-tie-down nil))
   "For a float value in the interval [A,C], compute the shortest decimal representation."
   (let ((ai (list a))
         (ci (list (if accept-larger c (1- c))))
+        (bi (list b))
+        (digits (list 0))
+        (all-b-zero T)
         (i 0)
         (all-a-zero T))
     (loop
@@ -46,6 +49,8 @@
          (setf all-a-zero (and all-a-zero (zerop (mod (car ai) 10))))
          (push a-floor ai)
          (push c-floor ci)
+         (push (mod (car bi) 10) digits)
+         (setf all-b-zero (and all-b-zero (zerop (car digits))))
          (incf i))
     (when (and accept-smaller all-a-zero)
       (loop
@@ -54,4 +59,11 @@
            (push (/ (car ai) 10) ai)
            (push (truncate (car ci) 10) ci)
            (incf i)))
-    (values (car ci) i)))
+    (let* ((is-tie (and all-b-zero (= 5 (car digits))))
+           (want-round-down (or (< (car digits) 5)
+                                (and is-tie break-tie-down)))
+           (round-down (or (and want-round-down (or (not (= (car ai) (car bi)))
+                                                    all-a-zero))
+                           (> (1+ (car bi)) (car ci)))))
+
+      (values (if round-down (car ci) (1+ (car ci))) i))))
