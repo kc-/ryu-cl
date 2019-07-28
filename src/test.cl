@@ -1,3 +1,7 @@
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unless (find-package :fiveam)
+    (ql:quickload :fiveam)))
+
 (defpackage :ryu-cl-tests (:use :common-lisp :fiveam))
 
 (in-package #:ryu-cl-tests)
