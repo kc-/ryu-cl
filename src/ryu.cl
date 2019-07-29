@@ -8,12 +8,13 @@
       (integer-decode-float float-number)
     (cond
       ((= 0 float-number)
-       (return-from float-to-string "0.0"))
+       (return-from float-to-string
+         (if (minusp sign) "-0.0" "0.0")))
       ((or (and (typep float-number 'single-float)
                 (= exponent #xFF))
            (= exponent #x7FF))
        (return-from float-to-string (if (zerop significand)
-                                        "Infinity"
+                                        (if (minusp sign) "-Infinity" "Infinity")
                                         "NaN"))))
     (let* ((e2 (- exponent 2))
            (u (* (- (* 4 significand) 2)))
@@ -26,6 +27,8 @@
         (let* ((digits (princ-to-string dec-coeff))
                (final-exponent (1- (+ dec-exponent e10 (length digits)))))
           (with-output-to-string (s)
+            (when (minusp sign)
+              (princ "-" s))
             (cond
               ((< -4 final-exponent 7)
                (cond ((plusp final-exponent)
