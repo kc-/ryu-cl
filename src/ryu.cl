@@ -86,26 +86,33 @@
       (values (if round-down c (1+ c)) i))))
 
 (defun minmax-euclid (a b M)
-  (let ((_a a) (_b b)
-        (_s 1) (_t 0) (_u 0) (_v 1))
+  (let ((_a a)
+        (_b b)
+        (_s 1)
+        (_t 0)
+        (_u 0)
+        (_v 1))
     (loop
-       do
-         (loop while (>= _b _a) do
-              (setf _b (- _b _a))
-              (setf _u (- _u _s))
-              (setf _v (- _v _t))
-              (when (>= (- _u) M)
-                (return-from minmax-euclid (values _a _b))))
+       (loop while (>= _b _a) do
+            (decf _b _a)
+            (decf _u _s)
+            (decf _v _t)
+            (assert (= _a (+ (* a _s) (* b _t))))
+            (assert (= _b (+ (* a _u) (* b _v))))
+            (when (>= (- _u) M)
+              (return-from minmax-euclid (values _a _b))))
 
-         (when (zerop _b)
-           (return-from minmax-euclid (values 1 (1- b))))
+       (when (zerop _b)
+         (return-from minmax-euclid (values 1 (1- b))))
 
-         (loop while (>= _a _b) do
-              (setf _a (- _a _b))
-              (setf _s (- _s _u))
-              (setf _t (- _t _v))
-              (when (>= _s M)
-                (return-from minmax-euclid (values _a _b))))
+       (loop while (>= _a _b) do
+            (decf _a _b)
+            (decf _s _u)
+            (decf _t _v)
+            (assert (= _a (+ (* a _s) (* b _t))))
+            (assert (= _b (+ (* a _u) (* b _v))))
+            (when (>= _s M)
+              (return-from minmax-euclid (values _a _b))))
 
-         (when (zerop _a)
-           (return-from minmax-euclid (values 1 (1- b)))))))
+       (when (zerop _a)
+         (return-from minmax-euclid (values 1 (1- b)))))))
