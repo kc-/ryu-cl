@@ -1,4 +1,5 @@
 (defpackage :ryu-cl (:use :common-lisp)
+            (:nicknames :ryu)
             (:export #:float-to-string))
 
 (in-package :ryu-cl)
@@ -87,6 +88,15 @@
                            (> (1+ b) c))))
 
       (values (if round-down c (1+ c)) i))))
+
+(defun minmax-naive (a b M)
+  (let* ((result-min (mod a b))
+         (result-max result-min))
+    (loop for i from 2 to M
+       for cur = (mod (* i a) b)
+       if (< cur result-min) do (setf result-min cur)
+       if (> cur result-max) do (setf result-max cur))
+    (values result-min result-max)))
 
 (defun minmax-euclid (a b M)
   (let ((_a a)
