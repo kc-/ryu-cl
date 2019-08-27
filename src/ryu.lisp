@@ -199,7 +199,7 @@
     (loop for i from 2 to M
        for cur = (mod (* i a) b)
        if (< cur result-min) do (setf result-min cur)
-       if (> cur result-max) do (setf result-max cur))
+       if (< result-max cur) do (setf result-max cur))
     (values result-min result-max)))
 
 (defun minmax-euclid (a b M)
