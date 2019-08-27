@@ -1,6 +1,6 @@
 (in-package #:asdf-user)
 
-(defsystem :ryu-cl
+(defsystem "ryu-cl"
   :description "An implementation of the Ryu float printer by Ulf Adams."
 
   :depends-on ()
