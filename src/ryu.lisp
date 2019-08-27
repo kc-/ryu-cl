@@ -31,6 +31,61 @@
                                                1734723475976807094 2168404344971008868 1355252715606880542 1694065894508600678
                                                2117582368135750847 1323488980084844279 1654361225106055349 2067951531382569187
                                                1292469707114105741 1615587133892632177 2019483917365790221))))
+
+(defconstant +uint32-max+ #xFFFFFFFF)
+
+(defun pow5-bits (e)
+  "Returns e == 0 ? 1 : ceil(log_2(5^e))."
+  ;; approximation works up to the point that the multiplication overflows at e = 3529. If the multiplication were done in 64 bits, it would fail at 5^4004 which is just greater than 2^9297.
+  (assert (<= 0 e))
+  (assert (<= e 3528))
+  (1+ (ash (* e 1217359) -19)))
+
+(defun log10-pow2 (e)
+  "Return floor(log_10(2^e))."
+  (assert (<= 0 e))
+  (assert (<= e 1650))
+  (ash (* e 78913) -18))
+
+(defun log10-pow5 (e)
+  "Return floor(log_10(5^3))."
+  (assert (<= 0 e))
+  (assert (<= e 2620))
+  (ash (* e 732923) -20))
+
+(defun mul-shift (m factor shift)
+  (assert (> shift 32))
+
+  (let* ((factor-lo factor)
+         (factor-hi (ash factor -32))
+         (bits-0 (* m factor-lo))
+         (bits-1 (* m factor-hi))
+         (sum (+ (ash bits-0 -32) bits-1))
+         (shifted-sum (ash sum (- 32 shift))))
+    (assert (<= shifted-sum +uint32-max+))
+    shifted-sum))
+
+(defun mul-pow5-inv-div-pow2 (m i j)
+  (mul-shift m (aref +float-pow5-inv-split+ i) j))
+
+(defun mul-pow5-div-pow2 (m i j)
+  (mul-shift m (aref +float-pow5-split+ i) j))
+
+(defun pow5-factor (value)
+  (let ((count 0))
+    (loop
+     (multiple-value-bind (q r)
+         (truncate value 5)
+       (assert (not (zerop value)))
+       (unless (zerop r) (return-from pow5-factor count))
+       (setf value q)
+       (incf count)))))
+
+(defun multiple-of-power-of-5 (value p)
+  (>= (pow5-factor value) p))
+
+(defun multiple-of-power-of-2 (value p)
+  (zerop (logand value (1- (ash 1 p)))))
 (defmethod float-to-string (float-number)
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float float-number)
