@@ -28,7 +28,8 @@
 
 (defconstant +float-pow5-inv-bitcount+ 59)
 (unless (boundp '+float-pow5-inv-split+)
- (defconstant +float-pow5-inv-split+ (make-array '(31) :initial-contents
+  (defconstant +float-pow5-inv-split+ (make-array '(31) :element-type '(unsigned-byte 64)
+                                                  :initial-contents
                                                  #(576460752303423489 461168601842738791 368934881474191033 295147905179352826
                                                    472236648286964522 377789318629571618 302231454903657294 483570327845851670
                                                    386856262276681336 309485009821345069 495176015714152110 396140812571321688
@@ -40,7 +41,8 @@
 
 (defconstant +float-pow5-bitcount+ 61)
 (unless (boundp '+float-pow5-split+)
- (defconstant +float-pow5-split+ (make-array '(47) :initial-contents
+  (defconstant +float-pow5-split+ (make-array '(47) :element-type '(unsigned-byte 64)
+                                              :initial-contents
                                              #(1152921504606846976 1441151880758558720 1801439850948198400 2251799813685248000
                                                1407374883553280000 1759218604441600000 2199023255552000000 1374389534720000000
                                                1717986918400000000 2147483648000000000 1342177280000000000 1677721600000000000
@@ -58,24 +60,30 @@
 
 (defun pow5-bits (e)
   "Returns e == 0 ? 1 : ceil(log_2(5^e))."
+  (declare (type (signed-byte 32) e))
   ;; approximation works up to the point that the multiplication overflows at e = 3529. If the multiplication were done in 64 bits, it would fail at 5^4004 which is just greater than 2^9297.
   (assert (<= 0 e))
   (assert (<= e 3528))
-  (1+ (ash (* e 1217359) -19)))
+  (the (signed-byte 32) (1+ (ash (* e 1217359) -19))))
 
 (defun log10-pow2 (e)
   "Return floor(log_10(2^e))."
+  (declare (type (signed-byte 32) e)
+           (optimize (speed 3) (safety 0) (debug 0)))
   (assert (<= 0 e))
   (assert (<= e 1650))
-  (ash (* e 78913) -18))
+  (the (signed-byte 32) (ash (* e 78913) -18)))
 
 (defun log10-pow5 (e)
-  "Return floor(log_10(5^3))."
+  "Return floor(log_10(5^e))."
+  (declare (type (signed-byte 32) e))
   (assert (<= 0 e))
   (assert (<= e 2620))
-  (ash (* e 732923) -20))
+  (the (signed-byte 32) (ash (* e 732923) -20)))
 
 (defun mul-shift (m factor shift)
+  (declare (type (unsigned-byte 32) m shift)
+           (type (unsigned-byte 64) factor))
   (assert (> shift 32))
 
   (let* ((factor-lo factor)
@@ -85,15 +93,20 @@
          (sum (+ (ash bits-0 -32) bits-1))
          (shifted-sum (ash sum (- 32 shift))))
     (assert (<= shifted-sum +uint32-max+))
-    shifted-sum))
+    (the (unsigned-byte 32) shifted-sum)))
 
 (defun mul-pow5-inv-div-pow2 (m i j)
+  (declare (type (unsigned-byte 32) m i)
+           (type (signed-byte 32) j))
   (mul-shift m (aref +float-pow5-inv-split+ i) j))
 
 (defun mul-pow5-div-pow2 (m i j)
+  (declare (type (unsigned-byte 32) m i)
+           (type (signed-byte 32) j))
   (mul-shift m (aref +float-pow5-split+ i) j))
 
 (defun pow5-factor (value)
+  (declare (type (unsigned-byte 32) value))
   (let ((count 0))
     (loop
      (multiple-value-bind (q r)
@@ -104,12 +117,14 @@
        (incf count)))))
 
 (defun multiple-of-power-of-5 (value p)
+  (declare (type (unsigned-byte 32) value p))
   (>= (pow5-factor value) p))
 
 (defun multiple-of-power-of-2 (value p)
+  (declare (type (unsigned-byte 32) value p))
   (zerop (logand value (1- (ash 1 p)))))
 
-(defun compute-q-vr-vp-vm (mv mm mp e2 accept-bounds)
+(defun compute-q-vr-vp-vm (mv mm mp e2 accept-bounds mm-shift)
   (let ((vr-is-trailing-zeros nil)
         (vm-is-trailing-zeros nil))
    (if (minusp e2)
