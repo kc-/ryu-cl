@@ -211,6 +211,9 @@
              (format *debug-io* "~&~a: ~a~%" symb val))
         (cond
           ((or vm-is-trailing-zeros vr-is-trailing-zeros)
+           (format *debug-io*
+                   "vm-is-trailing-zeros:~a,  vr-is-trailing-zeros:~a~%"
+                   vm-is-trailing-zeros vr-is-trailing-zeros)
            (loop while (> (truncate vp 10) (truncate vm 10)) do
                 (setf vm-is-trailing-zeros (and vm-is-trailing-zeros (zerop (mod vm 10)))
                       vr-is-trailing-zeros (and vr-is-trailing-zeros (zerop last-removed-digit))
@@ -250,7 +253,9 @@
                           vp vp-truncated
                           vm vm-truncated)
                     (incf removed-digit-count))))
+           (format *debug-io* "vr:~a last-removed-digit:~a~%" vr last-removed-digit)
            (when (or (eql vr vm) (>= last-removed-digit 5))
+             (format *debug-io* "INCF'ing VR~%")
              (incf vr))
            (setf output vr)))
         (let ((exp (+ e10 removed-digit-count)))
