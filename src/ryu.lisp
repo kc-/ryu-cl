@@ -238,13 +238,18 @@
                   (>= last-removed-digit 5))
              (incf vr)))
           (T
-           (loop while (> (truncate vp 10) (truncate vm 10)) do
-                (setf last-removed-digit (mod vr 10)
-                      vr (truncate vr 10)
-                      vp (truncate vp 10)
-                      vm (truncate vm 10))
-                (incf removed-digit-count))
-           (setf output vr)
+           (loop named remove-digits-loop do
+                (multiple-value-bind (vr-truncated vr-last-digit)
+                    (truncate vr 10)
+                  (let ((vm-truncated (truncate vm 10))
+                        (vp-truncated (truncate vp 10)))
+                    (when (<= vp-truncated vm-truncated)
+                      (return-from remove-digits-loop))
+                    (setf last-removed-digit vr-last-digit
+                          vr vr-truncated
+                          vp vp-truncated
+                          vm vm-truncated)
+                    (incf removed-digit-count))))
            (when (or (eql vr vm) (>= last-removed-digit 5))
              (incf vr))))
         (let ((exp (+ e10 removed-digit-count)))
