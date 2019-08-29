@@ -196,7 +196,10 @@
     (declare (ignorable sign))
     (let* ((e2 (- exponent 2))          ; TODO: subnormal floats need treatment
            (accept-bounds (evenp significand))
-           (mm-shift (if (or (not (= 1 significand))
+           (ieee-zero-mantissa (etypecase float-number
+                                 (single-float #x800000)
+                                 (double-float #x10000000000000)))
+           (mm-shift (if (or (not (= ieee-zero-mantissa significand))
                              (<= exponent (+ 1 (floor (log significand 2))
                                              (ieee-float-bias float-number))))
                         1 0))
