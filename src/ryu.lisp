@@ -126,7 +126,7 @@
   (declare (type (unsigned-byte 32) value p))
   (zerop (logand value (1- (ash 1 p)))))
 
-(defun compute-q-vr-vp-vm (mv mm mp e2 accept-bounds mm-shift)
+(defun compute-q-vr-vp-vm (mm mv mp e2 accept-bounds mm-shift)
   (let ((vr-is-trailing-zeros nil)
         (vm-is-trailing-zeros nil))
     (if (minusp e2)
