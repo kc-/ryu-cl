@@ -151,9 +151,10 @@
                      (decf vp)))
                 ((< q 31)
                  (setf vr-is-trailing-zeros (multiple-of-power-of-2 mv (1- q)))))
-          (return-from compute-q-vr-vp-vm (values q vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)))
+          (return-from compute-q-vr-vp-vm (values q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)))
         (let* ((q (log10-pow2 e2))
-               (k (+ +float-pow5-bitcount+ (pow5-bits q) -1))
+               (e10 q)
+               (k (+ +float-pow5-inv-bitcount+ (pow5-bits q) -1))
                (i (+ (- e2) q k))
                (vr (mul-pow5-inv-div-pow2 mv q i))
                (vp (mul-pow5-inv-div-pow2 mp q i))
@@ -171,7 +172,7 @@
                   (accept-bounds
                    (setf vm-is-trailing-zeros (multiple-of-power-of-5 mm q)))
                   ((multiple-of-power-of-5 mp q) (decf vp))))
-              (return-from compute-q-vr-vp-vm (values q vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros))))))))
+              (return-from compute-q-vr-vp-vm (values q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros))))))))
 
 (defun floating-decimal-32 (float-number &key (accept-bounds T))
   (multiple-value-bind (significand exponent sign)
@@ -189,13 +190,16 @@
              "NaN"))))
     (let* ((e2 (- exponent 2))
            (u (* (- (* 4 significand) 1 (if (or (not (zerop significand)) (<= exponent 1))
+    (let* ((e2 (- exponent 2))          ; TODO: subnormal floats need treatment
+           (accept-bounds (evenp significand))
+           (u (* (- (* 4 significand) 1 (if (or (not (= 1 significand)) (<= exponent (1+ (ieee-float-bias float-number))))
                                             1 0))))
-           (v significand)
+           (v (* 4 significand))
+
            (w (* (+ (* 4 significand) 2)))
-           (e10 (if (minusp e2) e2 0))
            (removed-digit-count 0)
            (output))
-      (multiple-value-bind (q vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
+      (multiple-value-bind (q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
           (compute-q-vr-vp-vm u v w e2 accept-bounds (or (not (zerop significand)) (<= exponent 1)))
         (declare (ignorable q))
         (cond
