@@ -156,27 +156,31 @@
                 ((< q 31)
                  (setf vr-is-trailing-zeros (multiple-of-power-of-2 mv (1- q)))))
           (return-from compute-q-vr-vp-vm (values q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)))
-        (let* ((q (log10-pow2 e2))
+        (let* ((last-removed-digit 0)
+               (q (log10-pow2 e2))
                (e10 q)
                (k (+ +float-pow5-inv-bitcount+ (pow5-bits q) -1))
                (i (+ (- e2) q k))
                (vr (mul-pow5-inv-div-pow2 mv q i))
                (vp (mul-pow5-inv-div-pow2 mp q i))
                (vm (mul-pow5-inv-div-pow2 mm q i)))
+          (format *debug-io*
+                  "mm:~a mv:~a mp:~a~%" mm mv mp)
+          (format *debug-io*
+                  "q:~a i:~a k:~a~%" q i k)
           (when (and (not (zerop q))
                      (<= (truncate (1- vp) 10)
                          (truncate vm 10)))
-            (let* ((l (+ +float-pow5-inv-bitcount+ (pow5-bits (1- q)) -1))
-                   (last-removed-digit
-                    (mod (mul-pow5-inv-div-pow2 mv (1- q) (+ (- e2) q -1 l)) 10)))
+            (let* ((l (+ +float-pow5-inv-bitcount+ (pow5-bits (1- q)) -1)))
+              (setf last-removed-digit (mod (mul-pow5-inv-div-pow2 mv (1- q) (+ (- e2) q -1 l)) 10))
               (when (<= q 9)
                 (cond
                   ((zerop (mod mv 5))
                    (setf vr-is-trailing-zeros (multiple-of-power-of-5 mv q)))
                   (accept-bounds
                    (setf vm-is-trailing-zeros (multiple-of-power-of-5 mm q)))
-                  ((multiple-of-power-of-5 mp q) (decf vp))))
-              (return-from compute-q-vr-vp-vm (values q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros))))))))
+                  ((multiple-of-power-of-5 mp q) (decf vp))))))
+          (return-from compute-q-vr-vp-vm (values q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros))))))
 
 (defun ieee-float-bias (float-number)
   (etypecase float-number
