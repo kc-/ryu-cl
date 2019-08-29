@@ -88,7 +88,7 @@
            (type (unsigned-byte 64) factor))
   (assert (> shift 32))
 
-  (let* ((factor-lo (logand factor #xFFFFFFFF))
+  (let* ((factor-lo (logand factor +uint32-max+))
          (factor-hi (ash factor -32))
          (bits-0 (* m factor-lo))
          (bits-1 (* m factor-hi))
