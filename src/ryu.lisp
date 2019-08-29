@@ -65,8 +65,10 @@
 (defun pow5-bits (e)
   "Returns e == 0 ? 1 : ceil(log_2(5^e))."
   (declare (type (signed-byte 32) e))
-  ;; approximation works up to the point that the multiplication overflows at e = 3529. If the multiplication were done in 64 bits, it would fail at 5^4004 which is just greater than 2^9297.
-  (ceiling (log (expt 5 e) 2)))
+  ;; approximation works up to the point that the multiplication overflows at e = 3529.
+  ;; If the multiplication were done in 64 bits, it would fail at 5^4004 which is just greater than 2^9297.
+  (assert (<= 0 e 3528))
+  (1+ (ash (* e 1217359) -19)))
 
 (defun log10-pow2 (e)
   "Return floor(log_10(2^e))."
