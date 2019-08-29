@@ -190,7 +190,7 @@
 (defun floating-decimal-32 (float-number)
   (when (zerop float-number)            ; bail out early -- there's no infinity
     (return-from floating-decimal-32    ; or nan or -0.0 for common lisp floats,
-      "0.0"))                           ; but those should be part of this, too
+      "0.0"))                           ; should those be part of this, too?
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float float-number)
     (declare (ignorable sign))
