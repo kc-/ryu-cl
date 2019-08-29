@@ -174,22 +174,18 @@
                   ((multiple-of-power-of-5 mp q) (decf vp))))
               (return-from compute-q-vr-vp-vm (values q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros))))))))
 
-(defun floating-decimal-32 (float-number &key (accept-bounds T))
+(defun ieee-float-bias (float-number)
+  (etypecase float-number
+    (single-float 127)
+    (double-float 255)))
+
+(defun floating-decimal-32 (float-number)
+  (when (zerop float-number)            ; bail out early -- there's no infinity
+    (return-from floating-decimal-32    ; or nan or -0.0 for common lisp floats,
+      "0.0"))                           ; but those should be part of this, too
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float float-number)
-    (cond
-      ((= 0 float-number)
-       (return-from floating-decimal-32
-         (if (minusp sign) "-0.0" "0.0")))
-      ((or (and (typep float-number 'single-float)
-                (= exponent #xFF))
-           (= exponent #x7FF))
-       (return-from floating-decimal-32
-         (if (zerop significand)
-             (if (minusp sign) "-Infinity" "Infinity")
-             "NaN"))))
-    (let* ((e2 (- exponent 2))
-           (u (* (- (* 4 significand) 1 (if (or (not (zerop significand)) (<= exponent 1))
+    (declare (ignorable sign))
     (let* ((e2 (- exponent 2))          ; TODO: subnormal floats need treatment
            (accept-bounds (evenp significand))
            (u (* (- (* 4 significand) 1 (if (or (not (= 1 significand)) (<= exponent (1+ (ieee-float-bias float-number))))
@@ -201,7 +197,6 @@
            (output))
       (multiple-value-bind (q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
           (compute-q-vr-vp-vm u v w e2 accept-bounds (or (not (zerop significand)) (<= exponent 1)))
-        (declare (ignorable q))
         (cond
           ((or vm-is-trailing-zeros vr-is-trailing-zeros)
            (loop while (> (truncate vp 10) (truncate vm 10)) do
