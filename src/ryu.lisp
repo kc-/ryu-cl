@@ -196,8 +196,11 @@
     (declare (ignorable sign))
     (let* ((e2 (- exponent 2))          ; TODO: subnormal floats need treatment
            (accept-bounds (evenp significand))
-           (u (* (- (* 4 significand) 1 (if (or (not (= 1 significand)) (<= exponent (1+ (ieee-float-bias float-number))))
-                                            1 0))))
+           (mm-shift (if (or (not (= 1 significand))
+                             (<= exponent (+ 1 (floor (log significand 2))
+                                             (ieee-float-bias float-number))))
+                        1 0))
+           (u (* (- (* 4 significand) 1 mm-shift)))
            (v (* 4 significand))
 
            (w (* (+ (* 4 significand) 2)))
