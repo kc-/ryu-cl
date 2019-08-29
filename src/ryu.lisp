@@ -139,6 +139,10 @@
                (vr (mul-pow5-div-pow2 mv i j))
                (vp (mul-pow5-div-pow2 mp i j))
                (vm (mul-pow5-div-pow2 mm i j)))
+          (format *debug-io*
+                  "mm:~a mv:~a mp:~a~%" mm mv mp)
+          (format *debug-io*
+                  "q:~a i:~a k:~a j:~a~%" q i k j)
           (when (and (not (zerop q))
                      (<= (truncate (1- vp) 10)
                          (truncate vm 10)))
@@ -197,6 +201,10 @@
            (output))
       (multiple-value-bind (q e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
           (compute-q-vr-vp-vm u v w e2 accept-bounds (or (not (zerop significand)) (<= exponent 1)))
+        (loop for symb in '(q e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
+           for  val in (list q e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
+           do
+             (format *debug-io* "~&~a: ~a~%" symb val))
         (cond
           ((or vm-is-trailing-zeros vr-is-trailing-zeros)
            (loop while (> (truncate vp 10) (truncate vm 10)) do
