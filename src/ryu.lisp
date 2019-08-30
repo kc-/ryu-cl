@@ -189,6 +189,11 @@
     (single-float 127)
     (double-float 255)))
 
+(defun ieee-float-mantissa-bits (float-number)
+  (etypecase float-number
+    (single-float (sb-kernel:single-float-bits float-number))
+    (double-float (sb-kernel:double-float-bits float-number))))
+
 (defun float-to-string (float-number)
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float float-number)
