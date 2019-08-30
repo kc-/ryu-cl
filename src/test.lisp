@@ -2,14 +2,18 @@
   (unless (find-package :fiveam)
     (ql:quickload :fiveam)))
 
-(defpackage :ryu-cl-tests (:use :common-lisp :fiveam))
+(defpackage :ryu-cl/tests (:use :common-lisp :fiveam))
 
-(in-package #:ryu-cl-tests)
+(in-package #:ryu-cl/tests)
+
+
+(def-suite single-float-output)
+(in-suite single-float-output)
 
 (def-test float-to-string-floats-to-string ()
   (is (string= "0.0" (ryu-cl:float-to-string 0.0)))
+  (is (string= "-0.0" (ryu-cl:float-to-string -0.0)))
   (is (string= "23.42" (ryu-cl:float-to-string 23.42)))
-  (is (string= "6.02214076d23" (ryu-cl:float-to-string 6.02214076d23)))
   (flet ((correctly-converted (float-number float-string)
            (string= (ryu-cl:float-to-string float-number) float-string)))
     (is-every
@@ -28,6 +32,8 @@
       (1.2345678e7 "1.2345678e7")
       (1.0e7       "1.0e7"))))
 
+(def-suite single-float-support-functions)
+(in-suite single-float-support-functions)
 (def-test multiple-of-power-of-5 ()
   (is (ryu-cl::multiple-of-power-of-5 1 0))
   (is (not (ryu-cl::multiple-of-power-of-5 1 1)))
