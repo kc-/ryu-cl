@@ -220,7 +220,8 @@
            (mm-shift (if (or (not (= ieee-zero-mantissa significand))
                              (<= exponent (+ 1 (floor (log significand 2))
                                              (ieee-float-bias float-number))))
-                        1 0))
+                         1
+                         0))
            (u (* (- (* 4 significand) 1 mm-shift)))
            (v (* 4 significand))
 
