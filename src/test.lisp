@@ -10,10 +10,18 @@
 (def-suite single-float-output)
 (in-suite single-float-output)
 
-(def-test float-to-string-floats-to-string ()
+(def-test float-to-string-basic-cases ()
   (is (string= "0.0" (ryu-cl:float-to-string 0.0)))
   (is (string= "-0.0" (ryu-cl:float-to-string -0.0)))
-  (is (string= "23.42" (ryu-cl:float-to-string 23.42)))
+  (is (string= "1.0" (ryu-cl:float-to-string 1.0)))
+  (is (string= "-1.0" (ryu-cl:float-to-string -1.0)))
+  (is (string= "23.42" (ryu-cl:float-to-string 23.42))))
+
+(def-test float-to-string-subnormal-numbers ()
+  (is (string= "1.0e-38"     (ryu-cl:float-to-string 1.0e-38)))
+  (is (string= "1.23456e-38" (ryu-cl:float-to-string 123.456e-40))))
+
+(def-test float-to-string-clhs-22.1.3.1.3-printing-floats ()
   (flet ((correctly-converted (float-number float-string)
            (string= (ryu-cl:float-to-string float-number) float-string)))
     (is-every
@@ -34,6 +42,7 @@
 
 (def-suite single-float-support-functions)
 (in-suite single-float-support-functions)
+
 (def-test multiple-of-power-of-5 ()
   (is (ryu-cl::multiple-of-power-of-5 1 0))
   (is (not (ryu-cl::multiple-of-power-of-5 1 1)))
