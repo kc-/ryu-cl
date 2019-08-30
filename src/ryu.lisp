@@ -219,7 +219,7 @@
 
 (unless (boundp '+double-pow5-split+)
   (defconstant +double-pow5-split+
-    (make-array '(326 2) :element-type (unsigned-byte 64)
+    (make-array '(326 2) :element-type '(unsigned-byte 64)
                 :initial-contents
                 #((                    0  72057594037927936) (                    0  90071992547409920)
                   (                    0 112589990684262400) (                    0 140737488355328000)
@@ -512,7 +512,7 @@
 (defun ieee-float-bias (float-number)
   (etypecase float-number
     (single-float 127)
-    (double-float 255)))
+    (double-float 1023)))
 
 (defun ieee-float-mantissa-bits (float-number)
   (etypecase float-number
