@@ -385,12 +385,14 @@
                   ( 15019706394073012159 113923781555568710) (  9551260955736489391 142404726944460888)
                   (  5969538097335305869  89002954340288055) (  2850236603241744433 111253692925360069)))))
 
-
-
 (defconstant +uint32-max+ #xFFFFFFFF)
 
-(declaim (inline pow5-bits log10-pow2 log10-pow5
-                 mul-shift mul-pow5-div-pow2 mul-pow5-inv-div-pow2))
+(declaim (inline pow5-bits
+                 log10-pow2 log10-pow5
+                 mul-shift
+                 mul-pow5-div-pow2 mul-pow5-inv-div-pow2
+                 ieee-float-bias ieee-float-mantissa-bits))
+
 (defun pow5-bits (e)
   "Returns e == 0 ? 1 : ceil(log_2(5^e))."
   (declare (type (signed-byte 32) e))
