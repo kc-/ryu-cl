@@ -287,7 +287,7 @@
         (let ((exp (+ e10 removed-digit-count)))
           (when (minusp sign) (princ #\-))
           (let* ((digits (princ-to-string output))
-                 (final-exponent (1- (+ e10 removed-digit-count))))
+                 (final-exponent (1- (+ (length digits) e10 removed-digit-count))))
             #+RYU-DEBUG(format *debug-io* "digits: ~s~%final-exponent: ~d~%e10: ~a~%removed-digit-count: ~a~%"
                                digits final-exponent
                                e10 removed-digit-count)
