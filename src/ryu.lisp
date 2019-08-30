@@ -188,12 +188,17 @@
     (double-float 255)))
 
 (defun float-to-string (float-number)
-  (when (zerop float-number)            ; bail out early -- there's no infinity
-    (return-from float-to-string        ; or nan or -0.0 for common lisp floats,
-      "0.0"))                           ; should those be part of this, too?
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float float-number)
-    (declare (ignorable sign))
+    (when (zerop float-number)          ; bail out early -- there's no infinity
+      (return-from float-to-string      ; or nan for common lisp floats,
+        (with-output-to-string (s)      ; should those be part of this, too?
+          (when (minusp sign)
+            (princ #\- s))
+          (princ "0.0" s)
+          (unless (typep float-number *read-default-float-format*)
+            (princ (if (typep float-number 'single-float) "f0" "d0") s))
+          s)))
     (let* ((e2 (- exponent 2))          ; TODO: subnormal floats need treatment
            (accept-bounds (evenp significand))
            (ieee-zero-mantissa (etypecase float-number
