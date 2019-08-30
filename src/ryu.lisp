@@ -74,15 +74,13 @@
   "Return floor(log_10(2^e))."
   (declare (type (signed-byte 32) e)
            (optimize (speed 3) (safety 0) (debug 0)))
-  (assert (<= 0 e))
-  (assert (<= e 1650))
+  (assert (<= 0 e 1650))
   (the (signed-byte 32) (ash (* e 78913) -18)))
 
 (defun log10-pow5 (e)
   "Return floor(log_10(5^e))."
   (declare (type (signed-byte 32) e))
-  (assert (<= 0 e))
-  (assert (<= e 2620))
+  (assert (<= 0 e 2620))
   (the (signed-byte 32) (ash (* e 732923) -20)))
 
 (defun mul-shift (m factor shift)
