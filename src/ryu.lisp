@@ -40,15 +40,14 @@
 (defconstant +float-pow5-inv-bitcount+ 59)
 (defconstant +float-pow5-inv-table-size+ 31)
 (defun make-float-pow5-inv-lookup-table ()
-  (loop
-     with lookup-table = (make-array `(,+float-pow5-inv-table-size+) :element-type '(unsigned-byte 64))
-     for i below +float-pow5-inv-table-size+
-     for pow = (expt 5 i)
-     for pow5len = (1+ (floor (log pow 2)))
-     for j = (+ pow5len -1 +float-pow5-inv-bitcount+)
-     for v = (1+ (truncate (ash 1 j) pow))
-     do (setf (aref lookup-table i) v)
-     finally (return lookup-table)))
+  (loop with lookup-table = (make-array `(,+float-pow5-inv-table-size+) :element-type '(unsigned-byte 64))
+        for i below +float-pow5-inv-table-size+
+        for pow = (expt 5 i)
+        for pow5len = (1+ (floor (log pow 2)))
+        for j = (+ pow5len -1 +float-pow5-inv-bitcount+)
+        for v = (1+ (truncate (ash 1 j) pow))
+        do (setf (aref lookup-table i) v)
+        finally (return lookup-table)))
 
 (unless (boundp '+float-pow5-inv-split+)
   (defconstant +float-pow5-inv-split+
@@ -59,12 +58,12 @@
 
 (defun make-float-pow5-lookup-table ()
   (loop with lookup-table = (make-array `(,+float-pow5-table-size+))
-     for i below +float-pow5-table-size+
-     for pow = (expt 5 i)
-     for pow5len = (1+ (floor (log pow 2)))
-     for v = (ash pow (- +float-pow5-bitcount+ pow5len))
-     do (setf (aref lookup-table i) v)
-     finally (return lookup-table)))
+        for i below +float-pow5-table-size+
+        for pow = (expt 5 i)
+        for pow5len = (1+ (floor (log pow 2)))
+        for v = (ash pow (- +float-pow5-bitcount+ pow5len))
+        do (setf (aref lookup-table i) v)
+        finally (return lookup-table)))
 
 (unless (boundp '+float-pow5-split+)
   (defconstant +float-pow5-split+
@@ -127,12 +126,12 @@
   (declare (type (unsigned-byte 32) value))
   (let ((count 0))
     (loop
-     (multiple-value-bind (q r)
-         (truncate value 5)
-       (assert (not (zerop value)))
-       (unless (zerop r) (return-from pow5-factor count))
-       (setf value q)
-       (incf count)))))
+       (multiple-value-bind (q r)
+           (truncate value 5)
+         (assert (not (zerop value)))
+         (unless (zerop r) (return-from pow5-factor count))
+         (setf value q)
+         (incf count)))))
 
 (defun multiple-of-power-of-5 (value p)
   (declare (type (unsigned-byte 32) value p))
@@ -241,29 +240,29 @@
       (multiple-value-bind (e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
           (compute-decimal-interval u v w e2 accept-bounds (or (not (zerop significand)) (<= exponent 1)))
         #+RYU-DEBUG(loop for symb in '(e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
-           for  val in (list e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
-           do
-             (format *debug-io* "~&~a: ~a~%" symb val))
+                         for  val in (list e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
+                         do
+                            (format *debug-io* "~&~a: ~a~%" symb val))
         (cond
           ((or vm-is-trailing-zeros vr-is-trailing-zeros)
            #+RYU-DEBUG(format *debug-io*
                               "vm-is-trailing-zeros:~a,  vr-is-trailing-zeros:~a~%"
                               vm-is-trailing-zeros vr-is-trailing-zeros)
            (loop while (> (truncate vp 10) (truncate vm 10)) do
-                (setf vm-is-trailing-zeros (and vm-is-trailing-zeros (zerop (mod vm 10)))
-                      vr-is-trailing-zeros (and vr-is-trailing-zeros (zerop last-removed-digit))
-                      vr (truncate vr 10)
-                      vp (truncate vp 10)
-                      vm (truncate vm 10))
-                (incf removed-digit-count))
+             (setf vm-is-trailing-zeros (and vm-is-trailing-zeros (zerop (mod vm 10)))
+                   vr-is-trailing-zeros (and vr-is-trailing-zeros (zerop last-removed-digit))
+                   vr (truncate vr 10)
+                   vp (truncate vp 10)
+                   vm (truncate vm 10))
+             (incf removed-digit-count))
 
            (when vm-is-trailing-zeros
              (loop while (zerop (mod vm 10)) do
-                  (setf last-removed-digit (mod vr 10)
-                        vr (truncate vr 10)
-                        vp (truncate vp 10)
-                        vm (truncate vm 10))
-                  (incf removed-digit-count)))
+               (setf last-removed-digit (mod vr 10)
+                     vr (truncate vr 10)
+                     vp (truncate vp 10)
+                     vm (truncate vm 10))
+               (incf removed-digit-count)))
 
            (when (and vr-is-trailing-zeros (= last-removed-digit 5) (zerop (mod vr 2)))
              (setf last-removed-digit 4))
@@ -277,17 +276,17 @@
              (incf vr)))
           (T
            (loop named remove-digits-loop do
-                (multiple-value-bind (vr-truncated vr-last-digit)
-                    (truncate vr 10)
-                  (let ((vm-truncated (truncate vm 10))
-                        (vp-truncated (truncate vp 10)))
-                    (when (<= vp-truncated vm-truncated)
-                      (return-from remove-digits-loop))
-                    (setf last-removed-digit vr-last-digit
-                          vr vr-truncated
-                          vp vp-truncated
-                          vm vm-truncated)
-                    (incf removed-digit-count))))
+             (multiple-value-bind (vr-truncated vr-last-digit)
+                 (truncate vr 10)
+               (let ((vm-truncated (truncate vm 10))
+                     (vp-truncated (truncate vp 10)))
+                 (when (<= vp-truncated vm-truncated)
+                   (return-from remove-digits-loop))
+                 (setf last-removed-digit vr-last-digit
+                       vr vr-truncated
+                       vp vp-truncated
+                       vm vm-truncated)
+                 (incf removed-digit-count))))
            #+RYU-DEBUG(format *debug-io* "vr:~a last-removed-digit:~a~%" vr last-removed-digit)
            (when (or (eql vr vm) (>= last-removed-digit 5))
              #+RYU-DEBUG(format *debug-io* "INCF'ing VR~%")
@@ -344,15 +343,15 @@
 (defun make-double-pow5-inv-lookup-table ()
   (loop with lookup-table = (make-array +double-pow5-inv-table-size+
                                         :element-type '(unsigned-byte 128))
-     for i from 0 below (car +double-pow5-inv-table-size+)
-     for pow = (expt 5 i)
-     for pow5len = (1+ (floor (log pow 2)))
-     for j = (+ pow5len -1 +double-pow5-inv-bitcount+)
-     for inv = (1+ (truncate (ash 1 j) pow))
-     do
-       (setf (aref lookup-table i 0) (ldb (byte 64  0) inv)
-             (aref lookup-table i 1) (ldb (byte 64 64) inv))
-     finally (return lookup-table)))
+        for i from 0 below (car +double-pow5-inv-table-size+)
+        for pow = (expt 5 i)
+        for pow5len = (1+ (floor (log pow 2)))
+        for j = (+ pow5len -1 +double-pow5-inv-bitcount+)
+        for inv = (1+ (truncate (ash 1 j) pow))
+        do
+           (setf (aref lookup-table i 0) (ldb (byte 64  0) inv)
+                 (aref lookup-table i 1) (ldb (byte 64 64) inv))
+        finally (return lookup-table)))
 
 (unless (boundp '+double-pow5-inv-split+)
   (defconstant +double-pow5-inv-split+
@@ -361,17 +360,17 @@
 
 (defun make-double-pow5-lookup-table ()
   (loop
-     with lookup-table = (make-array +double-pow5-table-size+
-                                     :element-type '(unsigned-byte 64))
-     for i from 0 below (car +double-pow5-table-size+)
-     for pow = (expt 5 i)
-     for pow5len = (1+ (floor (log pow 2)))
-     for pow5High = (ash pow (- +double-pow5-bitcount+ pow5len 64))
-     for  pow5Low = (ldb (byte 64 0) (ash pow (- +double-pow5-bitcount+ pow5len)))
-     do
+    with lookup-table = (make-array +double-pow5-table-size+
+                                    :element-type '(unsigned-byte 64))
+    for i from 0 below (car +double-pow5-table-size+)
+    for pow = (expt 5 i)
+    for pow5len = (1+ (floor (log pow 2)))
+    for pow5High = (ash pow (- +double-pow5-bitcount+ pow5len 64))
+    for  pow5Low = (ldb (byte 64 0) (ash pow (- +double-pow5-bitcount+ pow5len)))
+    do
        (setf (aref lookup-table i 0) pow5low
              (aref lookup-table i 1) pow5High)
-     finally (return lookup-table)))
+    finally (return lookup-table)))
 
 (unless (boundp '+double-pow5-split+)
   (defconstant +double-pow5-split+
