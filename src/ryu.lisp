@@ -531,11 +531,12 @@
           (unless (typep float-number *read-default-float-format*)
             (princ (if (typep float-number 'single-float) "f0" "d0") s))
           s)))
+    ;; TODO: don't rely on sbcl internals for this
     (when (and (sb-ext:float-denormalized-p float-number)
                (evenp significand))
       (setf significand (ieee-float-mantissa-bits float-number))
       (setf exponent (- 1 (ieee-float-bias float-number) +ieee-single-float-mantissa-bit-length+)))
-    (let* ((e2 (- exponent 2))          ; TODO: subnormal floats need treatment
+    (let* ((e2 (- exponent 2))
            (accept-bounds (evenp significand))
            (ieee-zero-mantissa (etypecase float-number
                                  (single-float #x800000)
