@@ -6,6 +6,34 @@
 
 (in-package #:ryu-cl/tests)
 
+(def-suite double-float-output)
+(in-suite double-float-output)
+
+(def-test double-to-string-basic-cases ()
+  (is (string= "0.0d0" (ryu-cl:float-to-string 0.0d0)))
+  (is (string= "-0.0d0" (ryu-cl:float-to-string -0.0d0)))
+  (is (string= "1.0d0" (ryu-cl:float-to-string 1.0d0)))
+  (is (string= "-1.0d0" (ryu-cl:float-to-string -1.0d0)))
+  (is (string= "23.42d0" (ryu-cl:float-to-string 23.42d0))))
+
+(def-test double-to-string-clhs-22.1.3.1.3-printing-floats ()
+  (flet ((correctly-converted (float-number float-string)
+           (string= (ryu-cl:double-to-string float-number) float-string)))
+    (is-every
+        correctly-converted
+      (1.0d-5      "1.0d-5")
+      (0.4321d0    "0.4321d0")
+      (0.321d0     "0.321d0")
+      (0.21d0      "0.21d0")
+      (0.1d0       "0.1d0")
+      (1.0d0       "1.0d0")
+      (12.0d0      "12.0d0")
+      (12.3d0      "12.3d0")
+      (123.4d0     "123.4d0")
+      (1234.5d0    "1234.5d0")
+      (12345.6d0   "12345.6d0")
+      (1.2345678d7 "1.2345678d7")
+      (1.0d7       "1.0d7"))))
 
 (def-suite single-float-output)
 (in-suite single-float-output)
@@ -21,9 +49,9 @@
   (is (string= "1.0e-38"     (ryu-cl:float-to-string 1.0e-38)))
   (is (string= "1.23456e-38" (ryu-cl:float-to-string 123.456e-40))))
 
-(def-test float-to-string-clhs-22.1.3.1.3-printing-floats ()
+(def-test single-float-to-string-clhs-22.1.3.1.3-printing-floats ()
   (flet ((correctly-converted (float-number float-string)
-           (string= (ryu-cl:float-to-string float-number) float-string)))
+           (string= (ryu-cl:single-float-to-string float-number) float-string)))
     (is-every
         correctly-converted
       (1.0e-5      "1.0e-5")
