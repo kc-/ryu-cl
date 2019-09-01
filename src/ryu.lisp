@@ -22,7 +22,8 @@
   (:documentation "An implementation of the Ryu float to string converter by Ulf Adams: https://github.com/ulfjack/ryu .")
   (:use :common-lisp)
   (:nicknames :ryu)
-  (:export #:float-to-string))
+  (:export #:float-to-string
+           #:single-float-to-string #:double-float-to-string))
 
 (in-package :ryu-cl)
 
@@ -228,12 +229,12 @@
     (single-float (sb-kernel:single-float-bits float-number))
     (double-float (sb-kernel:double-float-bits float-number))))
 
-(defun float-to-string (float-number)
+(defun single-float-to-string (float-number)
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float float-number)
-    (when (zerop float-number)          ; bail out early -- there's no infinity
-      (return-from float-to-string      ; or nan for common lisp floats,
-        (with-output-to-string (s)      ; should those be part of this, too?
+    (when (zerop float-number)            ; bail out early -- there's no infinity
+      (return-from single-float-to-string ; or nan for common lisp floats,
+        (with-output-to-string (s)        ; should those be part of this, too?
           (when (minusp sign)
             (princ #\- s))
           (princ "0.0" s)
@@ -416,12 +417,12 @@
             vp
             vm)))
 
-(defun double-to-string (double-number)
+(defun double-float-to-string (double-number)
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float double-number)
-    (when (zerop double-number)         ; bail out early -- there's no infinity
-      (return-from double-to-string     ; or nan for common lisp floats,
-        (with-output-to-string (s)      ; should those be part of this, too?
+    (when (zerop double-number)           ; bail out early -- there's no infinity
+      (return-from double-float-to-string ; or nan for common lisp floats,
+        (with-output-to-string (s)        ; should those be part of this, too?
           (when (minusp sign)
             (princ #\- s))
           (princ "0.0" s)
@@ -561,3 +562,8 @@
                 (when (or (eql vr vm) round-up-p)
                   (incf vr))))))
         (digits-as-string sign vr e10 removed-digit-count 'double-float)))))
+
+(defun float-to-string (float-number)
+  (etypecase float-number
+    (single-float (single-float-to-string float-number))
+    (double-float (double-float-to-string float-number))))
