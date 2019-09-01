@@ -75,7 +75,9 @@
                  log10-pow2 log10-pow5
                  mul-shift
                  mul-pow5-div-pow2 mul-pow5-inv-div-pow2
-                 ieee-float-bias ieee-float-mantissa-bits))
+                 ieee-float-bias ieee-float-mantissa-bits
+                 multiple-of-power-of-2-32 multiple-of-power-of-5-64 pow5-factor-32
+                 multiple-of-power-of-2-64 multiple-of-power-of-5-64 pow5-factor-64))
 
 (defun pow5-bits (e)
   "Returns e == 0 ? 1 : ceil(log_2(5^e))."
@@ -122,23 +124,42 @@
            (type (signed-byte 32) j))
   (mul-shift m (aref +float-pow5-split+ i) j))
 
-(defun pow5-factor (value)
+(defun pow5-factor-32 (value)
   (declare (type (unsigned-byte 32) value))
   (let ((count 0))
     (loop
        (multiple-value-bind (q r)
            (truncate value 5)
          (assert (not (zerop value)))
-         (unless (zerop r) (return-from pow5-factor count))
+         (unless (zerop r) (return-from pow5-factor-32 count))
          (setf value q)
          (incf count)))))
 
-(defun multiple-of-power-of-5 (value p)
-  (declare (type (unsigned-byte 32) value p))
-  (>= (pow5-factor value) p))
+(defun pow5-factor-64 (value)
+  (declare (type (unsigned-byte 32) value))
+  (let ((count 0))
+    (loop
+       (multiple-value-bind (q r)
+           (truncate value 5)
+         (assert (not (zerop value)))
+         (unless (zerop r) (return-from pow5-factor-64 count))
+         (setf value q)
+         (incf count)))))
 
-(defun multiple-of-power-of-2 (value p)
+(defun multiple-of-power-of-5-32 (value p)
   (declare (type (unsigned-byte 32) value p))
+  (>= (pow5-factor-32 value) p))
+
+(defun multiple-of-power-of-2-32 (value p)
+  (declare (type (unsigned-byte 32) value p))
+  (zerop (logand value (1- (ash 1 p)))))
+
+(defun multiple-of-power-of-5-64 (value p)
+  (declare (type (unsigned-byte 63) value p))
+  (>= (pow5-factor-64 value) p))
+
+(defun multiple-of-power-of-2-64 (value p)
+  (declare (type (unsigned-byte 64) value p))
   (zerop (logand value (1- (ash 1 p)))))
 
 (defun compute-decimal-interval (mm mv mp e2 accept-bounds mm-shift)
@@ -169,7 +190,7 @@
                      (setf vm-is-trailing-zeros (eql mm-shift 1))
                      (decf vp)))
                 ((< q 31)
-                 (setf vr-is-trailing-zeros (multiple-of-power-of-2 mv (1- q)))))
+                 (setf vr-is-trailing-zeros (multiple-of-power-of-2-32 mv (1- q)))))
           (values e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros))
         (let* ((e10 q)
                (k (+ +float-pow5-inv-bitcount+ (pow5-bits q) -1))
@@ -187,10 +208,10 @@
               (when (<= q 9)
                 (cond
                   ((zerop (mod mv 5))
-                   (setf vr-is-trailing-zeros (multiple-of-power-of-5 mv q)))
+                   (setf vr-is-trailing-zeros (multiple-of-power-of-5-32 mv q)))
                   (accept-bounds
-                   (setf vm-is-trailing-zeros (multiple-of-power-of-5 mm q)))
-                  ((multiple-of-power-of-5 mp q) (decf vp))))))
+                   (setf vm-is-trailing-zeros (multiple-of-power-of-5-32 mm q)))
+                  ((multiple-of-power-of-5-32 mp q) (decf vp))))))
           (values e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)))))
 
 (defun ieee-float-bias (float-number)
@@ -375,3 +396,24 @@
 (unless (boundp '+double-pow5-split+)
   (defconstant +double-pow5-split+
     (make-double-pow5-lookup-table)))
+
+(declaim (inline mul-shift-128 mul-shift-all))
+
+(defun mul-shift-128 (m mul-0 mul-1 j)
+  (declare (type (unsigned-byte 64) m mul-0 mul-1)
+           (type (unsigned-byte 32) j))
+  (let ((b0 (* m mul-0))
+        (b1 (* m mul-1)))
+    (the (unsigned-byte 64) (ash (+ (ash b0 -64) b1) (- 64 j)))))
+
+(defun mul-shift-all (m mul-0 mul-1 j mm-shift)
+  ;; (declare (type (unsigned-byte 64) m mul-0 mul-1)
+  ;;          (type (unsigned-byte 32) j mm-shift))
+
+  (dbg m mul-0 mul-1 j mm-shift)
+
+  (let ((vp (mul-shift-128 (+ (* 4 m) 2) mul-0 mul-1 j))
+        (vm (mul-shift-128 (- (* 4 m) 1 mm-shift) mul-0 mul-1 j)))
+    (values (mul-shift-128 (* 4 m) mul-0 mul-1 j)
+            vp
+            vm)))
