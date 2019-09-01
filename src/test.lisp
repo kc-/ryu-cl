@@ -6,19 +6,20 @@
 
 (in-package #:ryu-cl/tests)
 
-(def-suite double-float-output)
-(in-suite double-float-output)
+(def-suite ryu-float-output)
+(in-suite ryu-float-output)
+
 
 (def-test double-to-string-basic-cases ()
-  (is (string= "0.0d0" (ryu-cl:float-to-string 0.0d0)))
-  (is (string= "-0.0d0" (ryu-cl:float-to-string -0.0d0)))
-  (is (string= "1.0d0" (ryu-cl:float-to-string 1.0d0)))
-  (is (string= "-1.0d0" (ryu-cl:float-to-string -1.0d0)))
-  (is (string= "23.42d0" (ryu-cl:float-to-string 23.42d0))))
+  (is (string= "0.0d0" (ryu-cl:double-float-to-string 0.0d0)))
+  (is (string= "-0.0d0" (ryu-cl:double-float-to-string -0.0d0)))
+  (is (string= "1.0d0" (ryu-cl:double-float-to-string 1.0d0)))
+  (is (string= "-1.0d0" (ryu-cl:double-float-to-string -1.0d0)))
+  (is (string= "23.42d0" (ryu-cl:double-float-to-string 23.42d0))))
 
 (def-test double-to-string-clhs-22.1.3.1.3-printing-floats ()
   (flet ((correctly-converted (float-number float-string)
-           (string= (ryu-cl:double-to-string float-number) float-string)))
+           (string= (ryu-cl:double-float-to-string float-number) float-string)))
     (is-every
         correctly-converted
       (1.0d-5      "1.0d-5")
@@ -35,10 +36,7 @@
       (1.2345678d7 "1.2345678d7")
       (1.0d7       "1.0d7"))))
 
-(def-suite single-float-output)
-(in-suite single-float-output)
-
-(def-test float-to-string-basic-cases ()
+(def-test single-float-to-string-basic-cases ()
   (is (string= "0.0" (ryu-cl:float-to-string 0.0)))
   (is (string= "-0.0" (ryu-cl:float-to-string -0.0)))
   (is (string= "1.0" (ryu-cl:float-to-string 1.0)))
@@ -67,26 +65,3 @@
       (12345.6     "12345.6")
       (1.2345678e7 "1.2345678e7")
       (1.0e7       "1.0e7"))))
-
-(def-suite single-float-support-functions)
-(in-suite single-float-support-functions)
-
-(def-test multiple-of-power-of-5 ()
-  (is (ryu-cl::multiple-of-power-of-5 1 0))
-  (is (not (ryu-cl::multiple-of-power-of-5 1 1)))
-  (is (ryu-cl::multiple-of-power-of-5 5 1))
-  (is (ryu-cl::multiple-of-power-of-5 25 2))
-  (is (ryu-cl::multiple-of-power-of-5 75 2))
-  (is (ryu-cl::multiple-of-power-of-5 50 2))
-  (is (not (ryu-cl::multiple-of-power-of-5 51 2)))
-  (is (not (ryu-cl::multiple-of-power-of-5 75 4))))
-
-(def-test multiple-of-power-of-2 ()
-  (is (ryu-cl::multiple-of-power-of-2 1 0))
-  (is (not (ryu-cl::multiple-of-power-of-2 1 1)))
-  (is (ryu-cl::multiple-of-power-of-2 2 1))
-  (is (ryu-cl::multiple-of-power-of-2 4 2))
-  (is (ryu-cl::multiple-of-power-of-2 8 2))
-  (is (ryu-cl::multiple-of-power-of-2 12 2))
-  (is (not (ryu-cl::multiple-of-power-of-2 13 2)))
-  (is (not (ryu-cl::multiple-of-power-of-2 8 4))))
