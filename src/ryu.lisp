@@ -409,11 +409,8 @@
     (the (unsigned-byte 64) (ash (+ (ash b0 -64) b1) (- 64 j)))))
 
 (defun mul-shift-all (m mul-0 mul-1 j mm-shift)
-  ;; (declare (type (unsigned-byte 64) m mul-0 mul-1)
-  ;;          (type (unsigned-byte 32) j mm-shift))
-
-  (dbg m mul-0 mul-1 j mm-shift)
-
+  (declare (type (unsigned-byte 64) m mul-0 mul-1)
+           (type (unsigned-byte 32) j mm-shift))
   (let ((vp (mul-shift-128 (+ (* 4 m) 2) mul-0 mul-1 j))
         (vm (mul-shift-128 (- (* 4 m) 1 mm-shift) mul-0 mul-1 j)))
     (values (mul-shift-128 (* 4 m) mul-0 mul-1 j)
