@@ -26,7 +26,11 @@
 
 (in-package :ryu-cl)
 
-(defparameter RYU-DEBUG nil)
+(defmacro dbg (&rest symbols)
+  (when (boundp 'RYU-DEBUG)
+    `(format *debug-io*
+             ,(format nil "~{~a:~~a ~}~~%" (mapcar #'string-downcase symbols))
+             ,@symbols)))
 
 (defconstant +ieee-single-float-mantissa-bit-length+ 23)
 (defconstant +ieee-single-float-exponent-bit-length+  8)
@@ -177,8 +181,8 @@
                (vr (mul-pow5-div-pow2 mv i j))
                (vp (mul-pow5-div-pow2 mp i j))
                (vm (mul-pow5-div-pow2 mm i j)))
-          #+RYU-DEBUG(format *debug-io* "mm:~a mv:~a mp:~a~%" mm mv mp)
-          #+RYU-DEBUG(format *debug-io* "q:~a i:~a k:~a j:~a~%" q i k j)
+          (dbg mm mv mp)
+          (dbg q i j k)
           (when (and (not (zerop q))
                      (<= (truncate (1- vp) 10)
                          (truncate vm 10)))
@@ -198,8 +202,8 @@
                (vr (mul-pow5-inv-div-pow2 mv q i))
                (vp (mul-pow5-inv-div-pow2 mp q i))
                (vm (mul-pow5-inv-div-pow2 mm q i)))
-          #+RYU-DEBUG(format *debug-io* "mm:~a mv:~a mp:~a~%" mm mv mp)
-          #+RYU-DEBUG(format *debug-io* "q:~a i:~a k:~a~%" q i k)
+          (dbg mm mv mp)
+          (dbg q i k)
           (when (and (not (zerop q))
                      (<= (truncate (1- vp) 10)
                          (truncate vm 10)))
@@ -257,18 +261,13 @@
            (w (* (+ (* 4 significand) 2)))
            (removed-digit-count 0)
            (output))
-      #+RYU-DEBUG(format *debug-io* "e2:~a mm-shift:~a u:~a v:~a w:~a~%" e2 mm-shift u v w)
+      (dbg  e2 mm-shift u v w)
       (multiple-value-bind (e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
           (compute-decimal-interval u v w e2 accept-bounds (or (not (zerop significand)) (<= exponent 1)))
-        #+RYU-DEBUG(loop for symb in '(e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
-                         for  val in (list e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
-                         do
-                            (format *debug-io* "~&~a: ~a~%" symb val))
+        (dbg e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
         (cond
           ((or vm-is-trailing-zeros vr-is-trailing-zeros)
-           #+RYU-DEBUG(format *debug-io*
-                              "vm-is-trailing-zeros:~a,  vr-is-trailing-zeros:~a~%"
-                              vm-is-trailing-zeros vr-is-trailing-zeros)
+           (dbg vm-is-trailing-zeros vr-is-trailing-zeros)
            (loop while (> (truncate vp 10) (truncate vm 10)) do
              (setf vm-is-trailing-zeros (and vm-is-trailing-zeros (zerop (mod vm 10)))
                    vr-is-trailing-zeros (and vr-is-trailing-zeros (zerop last-removed-digit))
@@ -308,9 +307,8 @@
                        vp vp-truncated
                        vm vm-truncated)
                  (incf removed-digit-count))))
-           #+RYU-DEBUG(format *debug-io* "vr:~a last-removed-digit:~a~%" vr last-removed-digit)
+           (dbg vr last-removed-digit)
            (when (or (eql vr vm) (>= last-removed-digit 5))
-             #+RYU-DEBUG(format *debug-io* "INCF'ing VR~%")
              (incf vr))
            (setf output vr)))
         (let ((exp (+ e10 removed-digit-count)))
