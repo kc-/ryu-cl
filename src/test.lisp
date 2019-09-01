@@ -6,8 +6,10 @@
 
 (in-package #:ryu-cl/tests)
 
-(def-suite ryu-float-output)
-(in-suite ryu-float-output)
+(def-suite ryu-test-suite)
+
+(def-suite ryu-double-float-output :in ryu-test-suite)
+(in-suite ryu-double-float-output)
 
 
 (def-test double-to-string-basic-cases ()
@@ -36,6 +38,10 @@
       (1.2345678d7 "1.2345678d7")
       (1.0d7       "1.0d7"))))
 
+(def-suite ryu-single-float-output :in ryu-test-suite)
+(in-suite ryu-single-float-output)
+
+
 (def-test single-float-to-string-basic-cases ()
   (is (string= "0.0" (ryu-cl:float-to-string 0.0)))
   (is (string= "-0.0" (ryu-cl:float-to-string -0.0)))
@@ -43,7 +49,7 @@
   (is (string= "-1.0" (ryu-cl:float-to-string -1.0)))
   (is (string= "23.42" (ryu-cl:float-to-string 23.42))))
 
-(def-test float-to-string-subnormal-numbers ()
+(def-test single-float-to-string-subnormal-numbers ()
   (is (string= "1.0e-38"     (ryu-cl:float-to-string 1.0e-38)))
   (is (string= "1.23456e-38" (ryu-cl:float-to-string 123.456e-40))))
 
