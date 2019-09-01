@@ -81,7 +81,7 @@
                  mul-shift
                  mul-pow5-div-pow2 mul-pow5-inv-div-pow2
                  ieee-float-bias ieee-float-mantissa-bits
-                 multiple-of-power-of-2-32 multiple-of-power-of-5-64 pow5-factor-32
+                 multiple-of-power-of-2-32 multiple-of-power-of-5-32 pow5-factor-32
                  multiple-of-power-of-2-64 multiple-of-power-of-5-64 pow5-factor-64))
 
 (defun pow5-bits (e)
