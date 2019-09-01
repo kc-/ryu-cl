@@ -415,3 +415,149 @@
     (values (mul-shift-128 (* 4 m) mul-0 mul-1 j)
             vp
             vm)))
+
+(defun double-to-string (double-number)
+  (multiple-value-bind (significand exponent sign)
+      (integer-decode-float double-number)
+    (when (zerop double-number)         ; bail out early -- there's no infinity
+      (return-from double-to-string     ; or nan for common lisp floats,
+        (with-output-to-string (s)      ; should those be part of this, too?
+          (when (minusp sign)
+            (princ #\- s))
+          (princ "0.0" s)
+          (unless (typep double-number *read-default-float-format*)
+            (princ (if (typep double-number 'single-float) "f0" "d0") s))
+          s)))
+    (when (and (sb-ext:float-denormalized-p double-number)
+               (evenp significand))
+      (setf significand (ieee-float-mantissa-bits double-number))
+      (setf exponent (- 1 (ieee-float-bias double-number) +ieee-double-float-mantissa-bit-length+)))
+
+    (let* ((e2 (- exponent 2))
+           (mv (* 4 significand))
+           (accept-bounds (evenp significand))
+           (ieee-zero-mantissa (etypecase double-number
+                                 (single-float #x800000)
+                                 (double-float #x10000000000000)))
+           (mm-shift (if (or (not (= ieee-zero-mantissa significand))
+                             (<= exponent (+ 1 (floor (log significand 2))
+                                             (ieee-float-bias double-number))))
+                         1
+                         0))
+           (vm-is-trailing-zeros nil) (vr-is-trailing-zeros nil)
+           (e10 nil) (vr nil) (vp nil) (vm nil))
+      (dbg significand e2 mm-shift)
+      (if (minusp e2)
+          (let* ((q (log10-pow5 (- 0 e2 (if (> (- e2) 1) 1 0))))
+                 (i (- 0 e2 q))
+                 (k (- (pow5-bits i) +double-pow5-bitcount+))
+                 (j (- q k))
+                 (pow5-hi (aref +double-pow5-split+ i 0))
+                 (pow5-lo (aref +double-pow5-split+ i 1)))
+            (setf e10 (+ q e2))
+            (dbg q i k j)
+            (multiple-value-setq (vr vp vm)
+              (mul-shift-all significand pow5-hi pow5-lo j mm-shift))
+            (dbg vp vr vm)
+            (cond
+              ((<= q 1)
+               (setf vr-is-trailing-zeros T)
+               (if accept-bounds
+                   (setf vm-is-trailing-zeros (= 1 mm-shift))
+                   (decf vp)))
+              ((< q 63)
+               (setf vr-is-trailing-zeros (multiple-of-power-of-2-64 mv q)))))
+          (let* ((q (- (log10-pow2 e2) (if (> e2 3) 1 0)))
+                 (k (+ +double-pow5-inv-bitcount+ (pow5-bits q) -1))
+                 (i (+ (- e2) q k))
+                 (pow5-hi (aref +double-pow5-inv-split+ i 0))
+                 (pow5-lo (aref +double-pow5-inv-split+ i 1)))
+            (multiple-value-setq (vr vp vm)
+              (mul-shift-all significand pow5-hi pow5-lo i mm-shift))
+            (when (<= q 21)
+              (cond
+                ((zerop (mod mv 5))
+                 (setf vr-is-trailing-zeros (multiple-of-power-of-5-64 mv q)))
+                (accept-bounds
+                 (setf vm-is-trailing-zeros (multiple-of-power-of-5-64 (- mv 1 mm-shift) q)))
+                ((multiple-of-power-of-5-64 (+ mv 2) q)
+                 (decf vp))))))
+      (let ((removed-digit-count 0)
+            (last-removed-digit 0))
+        (dbg vm-is-trailing-zeros vr-is-trailing-zeros)
+        (cond
+          ((or vm-is-trailing-zeros vr-is-trailing-zeros)
+           (loop
+              (let ((vp-div-10 (truncate vp 10)))
+               (multiple-value-bind (vm-div-10 vm-mod-10)
+                   (truncate vm 10)
+                 (when (<= vp-div-10 vm-div-10)
+                     (return))
+                 (multiple-value-bind (vr-div-10 vr-mod-10)
+                     (truncate vr 10)
+                   (setf vm-is-trailing-zeros (and vm-is-trailing-zeros
+                                                   (zerop vm-mod-10))
+                         vr-is-trailing-zeros (and vr-is-trailing-zeros
+                                                   (zerop last-removed-digit))
+                         last-removed-digit vr-mod-10)
+
+                   (setf vr vr-div-10
+                         vp vp-div-10
+                         vm vm-div-10)
+                   (incf removed-digit-count)))))
+           (when vm-is-trailing-zeros
+             (loop
+                (multiple-value-bind (vm-div-10 vm-mod-10)
+                    (truncate vm 10)
+                  (unless (zerop vm-mod-10)
+                    (return))
+                  (multiple-value-bind (vr-div-10 vr-mod-10)
+                      (truncate vr 10)
+                    (let ((vp-div-10 (truncate vp 10)))
+                      (setf vr-is-trailing-zeros (and vr-is-trailing-zeros
+                                                      (zerop last-removed-digit))
+                            last-removed-digit vr-mod-10)
+                      (setf vr vr-div-10
+                            vp vp-div-10
+                            vm vm-div-10)
+                      (incf removed-digit-count))))))
+           (when (and vr-is-trailing-zeros
+                      (= 5 last-removed-digit)
+                      (evenp vr))
+             (setf last-removed-digit 4))
+           (when (or (and (eql vr vm)
+                          (or (not accept-bounds)
+                              (not vm-is-trailing-zeros))
+                          )
+                     (>= last-removed-digit 5))
+             (incf vr)))
+          (T
+           (dbg T)
+           (let ((round-up-p nil)
+                 (vp-div-100 (truncate vp 100))
+                 (vm-div-100 (truncate vm 100)))
+             (when (> vp-div-100 vm-div-100)
+               (multiple-value-bind (vr-div-100 vr-mod-100)
+                   (truncate vr 100)
+                 (setf round-up-p (>= vr-mod-100 50)
+                       vr vr-div-100
+                       vp vp-div-100
+                       vm vm-div-100)
+                 (incf removed-digit-count 2)
+                 (dbg removed-digit-count vr)))
+             (loop
+                (let ((vp-div-10 (truncate vp 10))
+                      (vm-div-10 (truncate vm 10)))
+                  (when (<= vp-div-10 vm-div-10)
+                    (return))
+                  (multiple-value-bind (vr-div-10 vr-mod-10)
+                      (truncate vr 10)
+                    (setf round-up-p (>= vr-mod-10 5)
+                          vr vr-div-10
+                          vp vp-div-10
+                          vm vm-div-10)
+                    (incf removed-digit-count)
+                    (dbg removed-digit-count vr)))
+                (when (or (eql vr vm) round-up-p)
+                  (incf vr))))))
+        (digits-as-string sign vr e10 removed-digit-count 'double-float)))))
