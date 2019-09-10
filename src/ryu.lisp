@@ -88,7 +88,7 @@ by Ulf Adams: https://github.com/ulfjack/ryu .")
                  pow5-factor-64 pow5-factor-32))
 
 (defun pow5-bits (e)
-  "Returns e == 0 ? 1 : ceil(log_2(5^e))."
+  "Returns e == 0 ? 1 : ceil( ld(5^e) )."
   (declare (type (signed-byte 32) e))
   ;; approximation works up to the point that the multiplication overflows,
   ;; at e = 3529. If the multiplication were done in 64 bits, it would fail at
@@ -97,7 +97,7 @@ by Ulf Adams: https://github.com/ulfjack/ryu .")
   (1+ (ash (* e 1217359) -19)))
 
 (defun log10-pow2 (e)
-  "Return floor(log_10(2^e))."
+  "Return floor( lg(2^e) )."
   (declare (type (signed-byte 32) e)
            (optimize (speed 3) (safety 0) (debug 0)))
   ;; The first value this approximation fails for is 2^1651,
@@ -106,7 +106,7 @@ by Ulf Adams: https://github.com/ulfjack/ryu .")
   (the (signed-byte 32) (ash (* e 78913) -18)))
 
 (defun log10-pow5 (e)
-  "Return floor(log_10(5^e))."
+  "Return floor( lg(5^e) )."
   (declare (type (signed-byte 32) e))
   ;; The first value this approximation fails for is 5^2621,
   ;; which is just greater than 10^1832.
