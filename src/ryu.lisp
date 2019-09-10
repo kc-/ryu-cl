@@ -19,7 +19,8 @@
 ;;; KIND, either express or implied.
 
 (defpackage :ryu-cl
-  (:documentation "An implementation of the Ryu float to string converter by Ulf Adams: https://github.com/ulfjack/ryu .")
+  (:documentation "An implementation of the Ryu float to string converter ~
+by Ulf Adams: https://github.com/ulfjack/ryu .")
   (:use :common-lisp)
   (:nicknames :ryu)
   (:export #:float-to-string
@@ -45,7 +46,8 @@
 (defconstant +float-pow5-inv-bitcount+ 59)
 (defconstant +float-pow5-inv-table-size+ 31)
 (defun make-float-pow5-inv-lookup-table ()
-  (loop with lookup-table = (make-array `(,+float-pow5-inv-table-size+) :element-type '(unsigned-byte 64))
+  (loop with lookup-table = (make-array `(,+float-pow5-inv-table-size+)
+                                        :element-type '(unsigned-byte 64))
         for i below +float-pow5-inv-table-size+
         for pow = (expt 5 i)
         for pow5len = (1+ (floor (log pow 2)))
@@ -80,15 +82,17 @@
                  log10-pow2 log10-pow5
                  mul-shift
                  mul-pow5-div-pow2 mul-pow5-inv-div-pow2
-                 ieee-float-bias ieee-float-mantissa-bits
-                 multiple-of-power-of-2-32 multiple-of-power-of-5-32 pow5-factor-32
-                 multiple-of-power-of-2-64 multiple-of-power-of-5-64 pow5-factor-64))
+                 ieee-float-bias ieee-float-mantissa-bitsa
+                 multiple-of-power-of-2-32 multiple-of-power-of-5-32
+                 multiple-of-power-of-2-64 multiple-of-power-of-5-64
+                 pow5-factor-64 pow5-factor-32))
 
 (defun pow5-bits (e)
   "Returns e == 0 ? 1 : ceil(log_2(5^e))."
   (declare (type (signed-byte 32) e))
-  ;; approximation works up to the point that the multiplication overflows at e = 3529.
-  ;; If the multiplication were done in 64 bits, it would fail at 5^4004 which is just greater than 2^9297.
+  ;; approximation works up to the point that the multiplication overflows,
+  ;; at e = 3529. If the multiplication were done in 64 bits, it would fail at
+  ;; 5^4004 which is just greater than 2^9297.
   (assert (<= 0 e 3528))
   (1+ (ash (* e 1217359) -19)))
 
@@ -96,14 +100,16 @@
   "Return floor(log_10(2^e))."
   (declare (type (signed-byte 32) e)
            (optimize (speed 3) (safety 0) (debug 0)))
-  ;; The first value this approximation fails for is 2^1651 which is just greater than 10^297.
+  ;; The first value this approximation fails for is 2^1651,
+  ;; which is just greater than 10^297.
   (assert (<= 0 e 1650))
   (the (signed-byte 32) (ash (* e 78913) -18)))
 
 (defun log10-pow5 (e)
   "Return floor(log_10(5^e))."
   (declare (type (signed-byte 32) e))
-  ;; The first value this approximation fails for is 5^2621 which is just greater than 10^1832.
+  ;; The first value this approximation fails for is 5^2621,
+  ;; which is just greater than 10^1832.
   (assert (<= 0 e 2620))
   (the (signed-byte 32) (ash (* e 732923) -20)))
 
@@ -197,8 +203,10 @@
                      (setf vm-is-trailing-zeros (eql mm-shift 1))
                      (decf vp)))
                 ((< q 31)
-                 (setf vr-is-trailing-zeros (multiple-of-power-of-2-32 mv (1- q)))))
-          (values e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros))
+                 (setf vr-is-trailing-zeros
+                       (multiple-of-power-of-2-32 mv (1- q)))))
+          (values e10 vr vp vm last-removed-digit
+                  vm-is-trailing-zeros vr-is-trailing-zeros))
         (let* ((e10 q)
                (k (+ +float-pow5-inv-bitcount+ (pow5-bits q) -1))
                (i (+ (- e2) q k))
@@ -211,7 +219,8 @@
                      (<= (truncate (1- vp) 10)
                          (truncate vm 10)))
             (let* ((l (+ +float-pow5-inv-bitcount+ (pow5-bits (1- q)) -1)))
-              (setf last-removed-digit (mod (mul-pow5-inv-div-pow2 mv (1- q) (+ (- e2) q -1 l)) 10))
+              (setf last-removed-digit
+                    (mod (mul-pow5-inv-div-pow2 mv (1- q) (+ (- e2) q -1 l)) 10))
               (when (<= q 9)
                 (cond
                   ((zerop (mod mv 5))
@@ -219,7 +228,8 @@
                   (accept-bounds
                    (setf vm-is-trailing-zeros (multiple-of-power-of-5-32 mm q)))
                   ((multiple-of-power-of-5-32 mp q) (decf vp))))))
-          (values e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)))))
+          (values e10 vr vp vm last-removed-digit
+                  vm-is-trailing-zeros vr-is-trailing-zeros)))))
 
 (defun ieee-float-bias (float-number)
   (etypecase float-number
@@ -243,7 +253,9 @@
         (cond
           ((< -4 final-exponent 7)
            (cond ((plusp final-exponent)
-                  (princ (subseq digits 0 (min (length digits) (1+ final-exponent))) s)
+                  (princ (subseq digits 0 (min (length digits)
+                                               (1+ final-exponent)))
+                         s)
                   (let ((n-zeros (1+ (- final-exponent (length digits)))))
                     (when (plusp n-zeros)
                       (princ (subseq "000" 0 n-zeros) s)))
@@ -285,7 +297,9 @@
     (when (and (sb-ext:float-denormalized-p float-number)
                (evenp significand))
       (setf significand (ieee-float-mantissa-bits float-number))
-      (setf exponent (- 1 (ieee-float-bias float-number) +ieee-single-float-mantissa-bit-length+)))
+      (setf exponent (- 1
+                        (ieee-float-bias float-number)
+                        +ieee-single-float-mantissa-bit-length+)))
     (let* ((e2 (- exponent 2))
            (accept-bounds (evenp significand))
            (ieee-zero-mantissa #x800000)
@@ -301,15 +315,22 @@
            (removed-digit-count 0)
            (output))
       (dbg  e2 mm-shift u v w)
-      (multiple-value-bind (e10 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
-          (compute-decimal-interval u v w e2 accept-bounds (or (not (zerop significand)) (<= exponent 1)))
-        (dbg e10 e2 vr vp vm last-removed-digit vm-is-trailing-zeros vr-is-trailing-zeros)
+      (multiple-value-bind (e10 vr vp vm last-removed-digit
+                            vm-is-trailing-zeros vr-is-trailing-zeros)
+          (compute-decimal-interval u v w e2
+                                    accept-bounds
+                                    (or (not (zerop significand))
+                                        (<= exponent 1)))
+        (dbg e10 e2 vr vp vm last-removed-digit
+             vm-is-trailing-zeros vr-is-trailing-zeros)
         (cond
           ((or vm-is-trailing-zeros vr-is-trailing-zeros)
            (dbg vm-is-trailing-zeros vr-is-trailing-zeros)
            (loop while (> (truncate vp 10) (truncate vm 10)) do
-             (setf vm-is-trailing-zeros (and vm-is-trailing-zeros (zerop (mod vm 10)))
-                   vr-is-trailing-zeros (and vr-is-trailing-zeros (zerop last-removed-digit))
+             (setf vm-is-trailing-zeros (and vm-is-trailing-zeros
+                                             (zerop (mod vm 10)))
+                   vr-is-trailing-zeros (and vr-is-trailing-zeros
+                                             (zerop last-removed-digit))
                    vr (truncate vr 10)
                    vp (truncate vp 10)
                    vm (truncate vm 10))
@@ -323,7 +344,9 @@
                      vm (truncate vm 10))
                (incf removed-digit-count)))
 
-           (when (and vr-is-trailing-zeros (= last-removed-digit 5) (zerop (mod vr 2)))
+           (when (and vr-is-trailing-zeros
+                      (= last-removed-digit 5)
+                      (zerop (mod vr 2)))
              (setf last-removed-digit 4))
 
            (setf output vr)
@@ -432,7 +455,9 @@
     (when (and (sb-ext:float-denormalized-p double-number)
                (evenp significand))
       (setf significand (ieee-float-mantissa-bits double-number))
-      (setf exponent (- 1 (ieee-float-bias double-number) +ieee-double-float-mantissa-bit-length+)))
+      (setf exponent (- 1
+                        (ieee-float-bias double-number)
+                        +ieee-double-float-mantissa-bit-length+)))
 
     (let* ((e2 (- exponent 2))
            (mv (* 4 significand))
@@ -478,7 +503,8 @@
                 ((zerop (mod mv 5))
                  (setf vr-is-trailing-zeros (multiple-of-power-of-5-64 mv q)))
                 (accept-bounds
-                 (setf vm-is-trailing-zeros (multiple-of-power-of-5-64 (- mv 1 mm-shift) q)))
+                 (setf vm-is-trailing-zeros
+                       (multiple-of-power-of-5-64 (- mv 1 mm-shift) q)))
                 ((multiple-of-power-of-5-64 (+ mv 2) q)
                  (decf vp))))))
       (let ((removed-digit-count 0)
