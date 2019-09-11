@@ -253,10 +253,10 @@ vr-is-trailing-zeros : boolean"
     (single-float (sb-kernel:single-float-bits float-number))
     (double-float (sb-kernel:double-float-bits float-number))))
 
-(defun digits-as-string (sign output e10 removed-digit-count float-type)
+(defun digits-as-string (sign digits-as-integer e10 removed-digit-count float-type)
   (let ((exp (+ e10 removed-digit-count)))
     (when (minusp sign) (princ #\-))
-    (let* ((digits (princ-to-string output))
+    (let* ((digits (princ-to-string digits-as-integer))
            (final-exponent (1- (+ (length digits) e10 removed-digit-count))))
       (dbg digits final-exponent e10 removed-digit-count)
       (with-output-to-string (s)
