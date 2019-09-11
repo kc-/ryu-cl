@@ -176,6 +176,18 @@ by Ulf Adams: https://github.com/ulfjack/ryu .")
   (zerop (logand value (1- (ash 1 p)))))
 
 (defun compute-decimal-interval (mm mv mp e2 accept-bounds mm-shift)
+  "For an ieee-float in the interval of (mm,mv,mp) * 2^(e2), compute the
+corresponding decimal factors, that is, the appropriate values such that
+mm * 2^(e2) = vm * 2^(10), and likewise for vr and vp.
+Returns, as values, the following:
+
+e10                  : the decimal exponent
+vr                   : coefficient for the center number
+vp                   : coefficient for the more positive number
+vm                   : coefficient for the more negative number
+last-removed-digit   : the last digit that got removed (or 0)
+vm-is-trailing-zeros : boolean
+vr-is-trailing-zeros : boolean"
   (let ((vr-is-trailing-zeros nil)
         (vm-is-trailing-zeros nil)
         (last-removed-digit 0)
