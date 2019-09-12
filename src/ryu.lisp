@@ -294,6 +294,8 @@ vr-is-trailing-zeros : boolean"
         s))))
 
 (defun single-float-to-string (float-number)
+  "Convert the 32 bit IEEE value FLOAT-NUMBER to its string representation."
+  (declare (type single-float float-number))
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float float-number)
     (when (zerop float-number)            ; bail out early -- there's no infinity
@@ -453,6 +455,8 @@ vr-is-trailing-zeros : boolean"
             vm)))
 
 (defun double-float-to-string (double-number)
+  "Convert the 64 bit IEEE value FLOAT-NUMBER to its string representation."
+  (declare (type double-float double-number))
   (multiple-value-bind (significand exponent sign)
       (integer-decode-float double-number)
     (when (zerop double-number)           ; bail out early -- there's no infinity
