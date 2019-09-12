@@ -264,7 +264,10 @@ vr-is-trailing-zeros : boolean"
           (princ "-" s))
         (cond
           ((< -4 final-exponent 7)
-           (cond ((plusp final-exponent)
+           (cond ((minusp final-exponent)
+                  (princ (subseq "0.00" 0 (1+ (abs final-exponent))) s)
+                  (princ digits s))
+                 (T
                   (princ (subseq digits 0 (min (length digits)
                                                (1+ final-exponent)))
                          s)
@@ -274,12 +277,7 @@ vr-is-trailing-zeros : boolean"
                   (princ #\. s)
                   (if (> (length digits) (1+ final-exponent))
                       (princ (subseq digits (1+ final-exponent)) s)
-                      (princ "0" s)))
-                 ((minusp final-exponent)
-                  (princ (subseq "0.00" 0 (1+ (abs final-exponent))) s)
-                  (princ digits s))
-                 (T (princ digits s)
-                    (princ ".0" s)))
+                      (princ "0" s))))
            (unless (eql float-type *read-default-float-format*)
              (princ (if (eql float-type 'single-float) "f0" "d0") s)))
           (T
